@@ -9,6 +9,7 @@
   "author": "Sathish",
   "license": "ISC",
   "dependencies": {
+    "node": "20.5.0",
     "axios": "^1.4.0",
     "bcrypt": "^5.1.0",
     "body-parser": "^1.20.2",
