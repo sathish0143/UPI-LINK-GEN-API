@@ -3,7 +3,7 @@ const routes = express.Router();
 const user = require("./user");
 const mongoose = require("mongoose");
 const url =
-  "mongodb+srv://SathishRam2000:DAPgBczXN0z4zENT@sathishr.azcpo.mongodb.net/test";
+  "mongodb+srv://SathishRam2000:je3KI4g16sLOwnZY@sathishr.azcpo.mongodb.net/";
 
 //!connect mongodb
 mongoose

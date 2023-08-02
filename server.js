@@ -11,12 +11,6 @@ app.use(cors());
 //!use body-parser
 app.use(bodyParser.json());
 
-//!middleware function
-app.use((req, res, next) => {
-  console.log("middleware called");
-  next();
-});
-
 //!router callback function
 app.use("/api", routes);
 
@@ -30,10 +24,6 @@ app.get("*", (req, res) => {
   res.status(404);
   res.json({
     ERROR: "URL NOT FOUND",
-    view_Users: {
-      path: "api/user/all",
-      note: "You need to login first to view content",
-    },
     signup: {
       path: "api/user/signup",
       note: `Signup using below format`,
@@ -50,10 +40,6 @@ app.post("*", (req, res) => {
   res.status(404);
   res.json({
     ERROR: "URL NOT FOUND",
-    view_Users: {
-      path: "api/user/all",
-      note: "You need to login first to view content",
-    },
     signup: {
       path: "api/user/signup",
       note: `Signup using below format`,

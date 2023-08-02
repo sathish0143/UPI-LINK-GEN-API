@@ -4,58 +4,52 @@ const config = require("./config");
 const jwt = require("jsonwebtoken");
 const { hashGenerate } = require("./hash");
 const { validator } = require("./validator");
-
-//!schema for our data model
-const userSchema = new mongoose.Schema({
-  username: { type: String },
-  password: { type: String },
-  email: { type: String },
-});
-
-const User = mongoose.model("User", userSchema);
+const generateRoute = require("./generateLink");
+const User = require("./Schema");
 
 //!get all data from mongo
 
 let userStatus = false;
-
-Userroutes.get("/all", async (req, res) => {
-  if (userStatus == true) {
-    try {
-      const users = await User.find();
-      res.json(users);
-    } catch (err) {
-      res.status(500).json({ error: err.message });
-    }
-  } else {
-    res.send(
-      "Please login to view all registered users. Please go to login path--> api/user/login"
-    );
-  }
-});
+let token;
 
 //!post data to mongo for signup
 
 Userroutes.post("/signup", async (req, res) => {
   try {
-    const { username, email } = req.body;
-
     //!check user already registered
     const existUser = await User.findOne({ username: req.body.username });
+    const hashPass = await hashGenerate(req.body.password);
+    const password = hashPass;
+    console.log(password);
+    console.log(existUser);
     if (!existUser) {
-      console.log("Hi new user");
+      if (!req.body.username || !req.body.password || !req.body.email) {
+        res.send("check username,password,email are present");
+      } else {
+        console.log("Hi new user");
+        const newObject = new User({
+          username: req.body.username,
+          password: password,
+          email: req.body.email,
+        });
+        newObject
+          .save()
+          .then((savedObject) => {
+            res.status(200).json(savedObject);
+          })
+          .catch((error) => {
+            console.log(error);
+            res
+              .status(500)
+              .json({ error: "Error adding object to the database" });
+          });
+      }
     } else {
       res.send("User already exists,Please go to login path--> api/user/login");
       //console.log("already email was registered");
     }
-
-    const hashPass = await hashGenerate(req.body.password);
-    const password = hashPass;
-    console.log(password);
-    const users = new User({ username, password, email });
-    users.save();
-    res.status(200).send(users);
-    //console.log(users);
   } catch (err) {
+    console.log(err);
     res.status(500).send("Error creating user");
   }
 });
@@ -75,9 +69,10 @@ Userroutes.post("/login", async (req, res) => {
     if (!checkUser) {
       res.send("please enter correct password");
     } else {
-      const token = jwt.sign({ id: existUser._id }, config.secret, {
+      token = jwt.sign({ id: existUser._id }, config.secret, {
         expiresIn: "1h",
       });
+
       res.status(200).send({ auth: true, token: token, valid: "1hour" });
       userStatus = true;
       console.log(userStatus, "status");
@@ -91,5 +86,7 @@ Userroutes.get("/logout", function (req, res) {
   userStatus = false;
   console.log(userStatus, "status");
 });
+
+Userroutes.use("/", generateRoute);
 
 module.exports = Userroutes;

@@ -2,14 +2,14 @@
   "name": "jwt-auth",
   "version": "1.0.0",
   "description": "assessment of jwt token",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
-    "start": "nodemon ./node_modules/.bin/netlify-lambda serve src",
-    "build": "node ./node_modules/.bin/netlify-lambda build src"
+    "start": "nodemon sever.js"
   },
   "author": "Sathish",
   "license": "ISC",
   "dependencies": {
+    "axios": "^1.4.0",
     "bcrypt": "^5.1.0",
     "body-parser": "^1.20.2",
     "cors": "^2.8.5",
