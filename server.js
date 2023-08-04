@@ -1,54 +1,31 @@
 const express = require("express");
+require("dotenv").config();
 const port = process.env.PORT || 8090;
 const app = express();
-const routes = require("./routes");
 const bodyParser = require("body-parser");
 const cors = require("cors");
-
-//!use cocrs
+const mongoose = require("mongoose");
 app.use(cors());
-
-//!use body-parser
 app.use(bodyParser.json());
+console.log(process.env.PORT);
 
 //!router callback function
-app.use("/api", routes);
+const url =
+  "mongodb+srv://SathishRam2000:je3KI4g16sLOwnZY@sathishr.azcpo.mongodb.net/";
+
+//!connect mongodb
+mongoose
+  .connect(url, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
+  .then(() => console.log("MongoDB connected"))
+  .catch((err) => console.log(err));
 
 //!server creation
 app.listen(port, () => {
   console.log(`Server Created port: http://localhost:${port}`);
 });
 
-//!default err message
-app.get("*", (req, res) => {
-  res.status(404);
-  res.json({
-    ERROR: "URL NOT FOUND",
-    signup: {
-      path: "api/user/signup",
-      note: `Signup using below format`,
-      body: { username: "xxx", password: "xxx", email: "xxx@gmail.com" },
-    },
-    login: {
-      path: "api/user/login",
-      note: `Login using below format `,
-      body: { username: "xxx", password: "xxx" },
-    },
-  });
-});
-app.post("*", (req, res) => {
-  res.status(404);
-  res.json({
-    ERROR: "URL NOT FOUND",
-    signup: {
-      path: "api/user/signup",
-      note: `Signup using below format`,
-      body: { username: "xxx", password: "xxx", email: "xxx@gmail.com" },
-    },
-    login: {
-      path: "api/user/login",
-      note: `Login using below format `,
-      body: { username: "xxx", password: "xxx" },
-    },
-  });
-});
+app.use("/user", require("./Routes/index"));
+app.use("/link", require("./Routes/upiLink"));
