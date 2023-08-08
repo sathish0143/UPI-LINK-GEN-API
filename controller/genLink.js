@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 const jwt = require("jsonwebtoken");
 const config = require("../configs/index.js");
 const axios = require("axios");
-const User = require("../Model/Schema");
+const Transaction = require("../Model/Transaction.js");
 require("dotenv").config();
 
 const callbackFun = async (newObject, token) => {
@@ -28,15 +28,20 @@ module.exports = {
     try {
       var token = req.token;
       var jwtObject = jwt.verify(token, process.env.SECRET);
+      if (!jwtObject && !user) {
+        return res
+          .status(404)
+          .json({ message: " Username and token are must be entered" });
+      }
 
       //*find object present or not
-      const query = { _id: jwtObject.id };
-      const foundDocument = await User.findOne(query);
+      const query = { user: jwtObject.id, isActive: 1 };
+      const foundDocument = await Transaction.findOne(query);
       if (!foundDocument) {
         return res.status(404).json({ message: "Document not found" });
       } else {
         //!for unique refrance id
-        const checkRefId = await User.findOne({
+        const checkRefId = await Transaction.findOne({
           "transaction.reference_id": req.body.reference_id,
         });
         if (!checkRefId) {
@@ -48,20 +53,20 @@ module.exports = {
           //!callback to generate upi link
           callbackFun(
             newObject,
-            "aWSVQNyt+z3IiJHV+YX9UpROt9APFfeJkenakdl9YQvv8DECkPxJoaJKT28qbITpU3+gxlwnWi96igWiAUX8Cw=="
+            "aWSVQNyt+z3IiJHV+YX9UvYtyUnrVdMU2D+Yxt1MGQYilHwbPb2MizT5ZH2H0RxymCRGyaAwHn8ocjXFCALmeXW4RrTz80RxMiQjZwZD4U7RyNz/CFVYuWk+ifrZVCGVRd07O/LTVyvFgF1TgkF1TQ=="
           )
             .then((response) => {
               //!recive call back and store to database
               const saveDetails = {
+                User: jwtObject.id,
                 amount: req.body.amount,
                 reference_id: req.body.reference_id,
                 transcation_note: req.body.transcation_note,
                 status: response.data.data.status,
                 transcation_id: response.data.data.transcation_id,
+                isActive: 1,
               };
-              foundDocument.transaction.push(saveDetails);
-              foundDocument.save();
-
+              Transaction.create(saveDetails);
               res.json(response.data);
             })
             .catch((error) => {
@@ -83,25 +88,45 @@ module.exports = {
   },
   status: async (req, res) => {
     try {
-      const checkRefId = await User.findOne(
-        {
-          "transaction.reference_id": req.body.reference_id,
-        },
-        { "transaction.$": 1 }
-      );
-      res.status(200).send(checkRefId.transaction);
+      var token = req.token;
+      var jwtObject = jwt.verify(token, process.env.SECRET);
+      if (!jwtObject && !user) {
+        return res
+          .status(404)
+          .json({ message: " referrence id and token are must be entered" });
+      }
+      const query = {
+        user: jwtObject.id,
+        isActive: 1,
+        reference_id: req.body.reference_id,
+      };
+      const checkRefId = await Transaction.findOne({ query });
+      if (!checkRefId) {
+        return res.status(404).json({ message: " Reference id not found" });
+      } else {
+        res.status(200).send(checkRefId);
+      }
     } catch (err) {
       console.log(err);
     }
   },
   filter: async (req, res) => {
     try {
-      const items = await User.find(
-        {
-          "transaction.status": req.params.status,
-        },
-        { "transaction.$": 100 }
-      );
+      var token = req.token;
+      var jwtObject = jwt.verify(token, process.env.SECRET);
+      if (!jwtObject && !user) {
+        return res
+          .status(404)
+          .json({ message: " referrence id and token are must be entered" });
+      }
+      const query = {
+        user: jwtObject.id,
+        isActive: 1,
+        status: req.params.status,
+      };
+      const items = await Transaction.find({
+        query,
+      });
       console.log(req.params.status);
       res.json({ items });
       if (!items) {

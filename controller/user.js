@@ -1,7 +1,6 @@
 const mongoose = require("mongoose");
 const jwt = require("jsonwebtoken");
-const config = require("../configs/index");
-const User = require("../Model/Schema");
+const User = require("../Model/User");
 const hash = require("../service/passwordService");
 require("dotenv").config();
 
