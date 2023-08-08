@@ -3,6 +3,7 @@ const jwt = require("jsonwebtoken");
 const config = require("../configs/index.js");
 const axios = require("axios");
 const Transaction = require("../Model/Transaction.js");
+const User = require("../Model/User.js");
 require("dotenv").config();
 
 const callbackFun = async (newObject, token) => {
@@ -35,50 +36,54 @@ module.exports = {
       }
 
       //*find object present or not
-      const query = { user: jwtObject.id, isActive: 1 };
-      const foundDocument = await Transaction.findOne(query);
-      if (!foundDocument) {
-        return res.status(404).json({ message: "Document not found" });
+      const findUser = await User.findOne({ _id: jwtObject.id });
+      if (!findUser) {
+        return res.status(404).json({ message: "You dont have access" });
       } else {
-        //!for unique refrance id
-        const checkRefId = await Transaction.findOne({
-          "transaction.reference_id": req.body.reference_id,
-        });
-        if (!checkRefId) {
-          const newObject = {
-            amount: req.body.amount,
-            reference_id: req.body.reference_id,
-            transcation_note: req.body.transcation_note,
-          };
-          //!callback to generate upi link
-          callbackFun(
-            newObject,
-            "aWSVQNyt+z3IiJHV+YX9UvYtyUnrVdMU2D+Yxt1MGQYilHwbPb2MizT5ZH2H0RxymCRGyaAwHn8ocjXFCALmeXW4RrTz80RxMiQjZwZD4U7RyNz/CFVYuWk+ifrZVCGVRd07O/LTVyvFgF1TgkF1TQ=="
-          )
-            .then((response) => {
-              //!recive call back and store to database
-              const saveDetails = {
-                User: jwtObject.id,
-                amount: req.body.amount,
-                reference_id: req.body.reference_id,
-                transcation_note: req.body.transcation_note,
-                status: response.data.data.status,
-                transcation_id: response.data.data.transcation_id,
-                isActive: 1,
-              };
-              Transaction.create(saveDetails);
-              res.json(response.data);
-            })
-            .catch((error) => {
-              console.log(error);
-              res.send("Api not connected properly");
-            });
+        const query = { user: jwtObject.id, isActive: 1 };
+        const foundDocument = await Transaction.findOne(query);
+        if (!foundDocument) {
+          return res.status(404).json({ message: "Document not found" });
         } else {
-          res.json({
-            status: false,
-            statusCode: 400,
-            message: "reference_id already exists!",
+          const checkRefId = await Transaction.findOne({
+            "transaction.reference_id": req.body.reference_id,
           });
+          if (!checkRefId) {
+            const newObject = {
+              amount: req.body.amount,
+              reference_id: req.body.reference_id,
+              transcation_note: req.body.transcation_note,
+            };
+            //!callback to generate upi link
+            callbackFun(
+              newObject,
+              "aWSVQNyt+z3IiJHV+YX9UvYtyUnrVdMU2D+Yxt1MGQYilHwbPb2MizT5ZH2H0RxymCRGyaAwHn8ocjXFCALmeXW4RrTz80RxMiQjZwZD4U7RyNz/CFVYuWk+ifrZVCGVRd07O/LTVyvFgF1TgkF1TQ=="
+            )
+              .then((response) => {
+                //!recive call back and store to database
+                const saveDetails = {
+                  User: jwtObject.id,
+                  amount: req.body.amount,
+                  reference_id: req.body.reference_id,
+                  transcation_note: req.body.transcation_note,
+                  status: response.data.data.status,
+                  transcation_id: response.data.data.transcation_id,
+                  isActive: 1,
+                };
+                Transaction.create(saveDetails);
+                res.json(response.data);
+              })
+              .catch((error) => {
+                console.log(error);
+                res.send("Api not connected properly");
+              });
+          } else {
+            res.json({
+              status: false,
+              statusCode: 400,
+              message: "reference_id already exists!",
+            });
+          }
         }
       }
     } catch (err) {
@@ -95,16 +100,22 @@ module.exports = {
           .status(404)
           .json({ message: " referrence id and token are must be entered" });
       }
-      const query = {
-        user: jwtObject.id,
-        isActive: 1,
-        reference_id: req.body.reference_id,
-      };
-      const checkRefId = await Transaction.findOne({ query });
-      if (!checkRefId) {
-        return res.status(404).json({ message: " Reference id not found" });
+      const findUser = await User.findOne({ _id: jwtObject.id });
+
+      if (!findUser) {
+        return res.status(404).json({ message: "User not found" });
       } else {
-        res.status(200).send(checkRefId);
+        const query = {
+          user: jwtObject.id,
+          isActive: 1,
+          reference_id: req.body.reference_id,
+        };
+        const checkRefId = await Transaction.findOne({ query });
+        if (!checkRefId) {
+          return res.status(404).json({ message: " Reference id not found" });
+        } else {
+          res.status(200).send(checkRefId);
+        }
       }
     } catch (err) {
       console.log(err);
@@ -119,20 +130,26 @@ module.exports = {
           .status(404)
           .json({ message: " referrence id and token are must be entered" });
       }
-      const query = {
-        user: jwtObject.id,
-        isActive: 1,
-        status: req.params.status,
-      };
-      const items = await Transaction.find({
-        query,
-      });
-      console.log(req.params.status);
-      res.json({ items });
-      if (!items) {
-        return res.status(404).json({ error: "Item not found" });
+      const findUser = await User.findOne({ _id: jwtObject.id });
+
+      if (!findUser) {
+        return res.status(404).json({ message: "User not found" });
+      } else {
+        const query = {
+          user: jwtObject.id,
+          isActive: 1,
+          status: req.params.status,
+        };
+        const items = await Transaction.find({
+          query,
+        });
+        console.log(req.params.status);
+        res.json({ items });
+        if (!items) {
+          return res.status(404).json({ error: "Item not found" });
+        }
+        console.log(items);
       }
-      console.log(items);
     } catch (error) {
       console.error(error);
       res.status(500).json({ error: "Failed to filter data" });
